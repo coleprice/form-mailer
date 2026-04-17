@@ -230,14 +230,20 @@ Planned request handling:
 3. Parse JSON payload.
 4. Validate required and optional fields.
 5. Reject forbidden mail-routing fields like `to`, `from`, `cc`, `bcc`, `replyTo`, `recipient`, `sender`.
-6. Apply honeypot check.
-7. Apply Turnstile verification if enabled.
-8. Apply per-IP rate limit in KV using `ratelimit:<ip>:<minute-bucket>`.
-9. Apply idempotency lookup with `X-Submission-Id` via `idem:<submission-id>`.
-10. Build normalized message.
-11. Call `mailService.enqueue(message)`.
-12. Cache successful idempotent response for 24h when a submission ID is present.
-13. Return stable JSON with a `status` field and user-facing message.
+6. Read the `Origin` request header.
+7. If `Origin` is missing or empty, reject.
+8. Load `settings:allowedOrigins`.
+9. If the allowed-origins setting is empty, attempt first-submit auto-detection by storing the current request origin as the initial allowed origin.
+10. If auto-detection cannot run yet, fall back gracefully to same-origin-only behavior until an origin is learned or saved by an admin.
+11. If the request origin is still not allowed, return `403` with `status: "origin_not_allowed"`.
+12. Apply honeypot check.
+13. Apply Turnstile verification if enabled.
+14. Apply per-IP rate limit in KV using `ratelimit:<ip>:<minute-bucket>`.
+15. Apply idempotency lookup with `X-Submission-Id` via `idem:<submission-id>`.
+16. Build normalized message.
+17. Call `mailService.enqueue(message)`.
+18. Cache successful idempotent response for 24h when a submission ID is present.
+19. Return stable JSON with a `status` field and user-facing message.
 
 ### Settings persistence
 
@@ -248,6 +254,7 @@ Planned KV keys:
 - `settings:recipientAddresses`
 - `settings:subjectTemplate`
 - `settings:successMessage`
+- `settings:allowedOrigins`
 - `settings:turnstileSiteKey`
 - `settings:turnstileSecretKey`
 - `settings:honeypotFieldName`
@@ -262,6 +269,7 @@ Defaults seeded during install:
 - provider: `cloudflare`
 - subject template: `[{site}] {formName}`
 - success message: concise success copy
+- allowed origins: `null` initially, then auto-populated from the first valid request origin when possible
 - honeypot field name: `website`
 - rate limit: `10`
 - turnstile enabled: `false`
@@ -306,6 +314,7 @@ Single admin page at `/settings`, served through the plugin `admin` route using 
    - Recipient addresses
    - Subject template
    - Success message
+   - Allowed origins textarea, one origin per line
    - Turnstile enabled toggle
    - Turnstile site key
    - Turnstile secret key as `secret_input`
@@ -315,6 +324,7 @@ Single admin page at `/settings`, served through the plugin `admin` route using 
    - Strict mode toggle
 6. `context`
    - Token help for `{site}` and `{formName}`
+   - Origin help text: "Leave empty to auto-detect this site's origin. Add additional origins for headless deployments where your frontend is on a different domain than your EmDash admin."
 7. `code`
    - Minimal API snippet or header example for `X-Submission-Id`
 
@@ -331,6 +341,7 @@ Validation rules:
 - provider must be `cloudflare` or `zeptomail`
 - sender must be a valid email address
 - recipients must parse into one or more valid email addresses
+- allowed origins must parse as zero or more valid origins, one per line
 - rate limit must be an integer >= 1
 - Turnstile fields required only when Turnstile is enabled
 - ZeptoMail-specific secret required only when provider is `zeptomail`
@@ -411,11 +422,15 @@ If we later decide to parallelize after the contracts are stable, the cleanest s
    - Proposed resolution: treat standard-plugin public routes as **unverified** until you explicitly approve that risk, rather than assuming the skill doc wins.
    - Please confirm how you want to handle that risk.
 
-3. **Origin policy for v1**
-   - The inspiration Worker explicitly allowlists origins.
-   - Your v1 settings list does not include an allowed-origins field.
-   - Proposed resolution: default v1 to same-origin form posts only, without adding a multi-origin settings UI.
-   - Please confirm whether same-origin-only is the right v1 scope.
+3. **Allowed origins behavior**
+   - Decision received: support configurable allowed origins for headless EmDash deployments.
+   - Plan update:
+     - persist `settings:allowedOrigins` as an array of origin strings
+     - expose it in admin as a textarea with one origin per line
+     - if empty, auto-detect the current site's origin on the first submit when possible
+     - if still empty, fall back gracefully to same-origin-only behavior until an origin is learned or saved
+     - reject requests with missing `Origin`, or with a non-matching origin, using `403` and `status: "origin_not_allowed"`
+   - No further decision needed here unless you want different missing-`Origin` behavior.
 
 4. **ZeptoMail secret storage**
    - The requirements explicitly mention secure storage for the Turnstile secret key, but not the ZeptoMail API key.
