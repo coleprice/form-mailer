@@ -22,6 +22,3 @@ export function formMailerPlugin(): PluginDescriptor {
     ]
   };
 }
-
-export default formMailerPlugin;
-
