@@ -1,0 +1,104 @@
+---
+interface Props {
+  action?: string;
+  turnstileSiteKey?: string;
+}
+
+const {
+  action = "/_emdash/api/plugins/@coleprice/emdash-plugin-form-mailer/submit",
+  turnstileSiteKey
+} = Astro.props;
+---
+
+<form id="contact-form" data-action={action}>
+  <label>
+    Name
+    <input name="name" type="text" required />
+  </label>
+
+  <label>
+    Email
+    <input name="email" type="email" required />
+  </label>
+
+  <label>
+    Message
+    <textarea name="message" rows="5" required></textarea>
+  </label>
+
+  <label class="honeypot" aria-hidden="true">
+    Website
+    <input name="website" type="text" tabindex="-1" autocomplete="off" />
+  </label>
+
+  {
+    turnstileSiteKey ? (
+      <div
+        class="cf-turnstile"
+        data-sitekey={turnstileSiteKey}
+      />
+    ) : null
+  }
+
+  <button type="submit">Send</button>
+  <p id="contact-form-status" role="status"></p>
+</form>
+
+<script is:inline>
+  const form = document.querySelector("#contact-form");
+  const status = document.querySelector("#contact-form-status");
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+    const submissionId = crypto.randomUUID();
+
+    const response = await fetch(form.dataset.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Submission-Id": submissionId
+      },
+      body: JSON.stringify({
+        formName: "Contact",
+        site: window.location.hostname,
+        fields: {
+          name: String(formData.get("name") || ""),
+          email: String(formData.get("email") || ""),
+          message: String(formData.get("message") || "")
+        },
+        honeypot: String(formData.get("website") || ""),
+        turnstileToken: String(formData.get("cf-turnstile-response") || "")
+      })
+    });
+
+    const payload = await response.json();
+    status.textContent = payload.message;
+  });
+</script>
+
+<style>
+  #contact-form {
+    display: grid;
+    gap: 1rem;
+    max-width: 40rem;
+  }
+
+  label {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  input,
+  textarea,
+  button {
+    font: inherit;
+    padding: 0.75rem;
+  }
+
+  .honeypot {
+    position: absolute;
+    left: -100vw;
+  }
+</style>

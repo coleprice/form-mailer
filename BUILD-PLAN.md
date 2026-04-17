@@ -80,6 +80,12 @@ Verified from current Cloudflare docs dated April 16, 2026:
 Important implementation note:
 
 - Inside a sandboxed EmDash plugin we should plan around `ctx.email.send()`, not raw `env.EMAIL.send()`, because the plugin runtime is mediated through EmDash capabilities. The Cloudflare binding docs still matter for host setup, local dev guidance, and configuration diagnostics.
+- Local-dev story for this plugin:
+  - `wrangler.jsonc` in this repo is for local development scaffolding only.
+  - Production `send_email` binding configuration belongs in the host EmDash site's Wrangler config, not inside the published plugin bundle.
+  - For local development, Cloudflare provider testing will target the host site's local Worker runtime with a `send_email` binding configured there.
+  - The plugin repo will also support ZeptoMail as the simpler provider to exercise non-binding delivery logic during local development and tests.
+  - The README will document both: how to test the Cloudflare provider locally through the host Worker binding, and that the repo-local `wrangler.jsonc` is only scaffolding.
 
 ## Proposed file and directory layout
 
@@ -131,6 +137,7 @@ Notes:
 
 - No plugin storage collections are planned for v1. KV is enough for settings, rate-limit counters, idempotency cache, and lightweight runtime notices.
 - `examples/contact-form.astro` is planned as a consumer-side integration example, not a runtime-loaded plugin component.
+- `src/admin/author-credit.ts` will isolate the reusable author-credit footer and "Get help" block(s) so the pattern can be reused across future plugins.
 
 ## Descriptor and capability manifest
 
@@ -233,16 +240,16 @@ Planned request handling:
 6. Read the `Origin` request header.
 7. If `Origin` is missing or empty, reject.
 8. Load `settings:allowedOrigins`.
-9. If the allowed-origins setting is empty, attempt first-submit auto-detection by storing the current request origin as the initial allowed origin.
-10. If auto-detection cannot run yet, fall back gracefully to same-origin-only behavior until an origin is learned or saved by an admin.
-11. If the request origin is still not allowed, return `403` with `status: "origin_not_allowed"`.
-12. Apply honeypot check.
-13. Apply Turnstile verification if enabled.
-14. Apply per-IP rate limit in KV using `ratelimit:<ip>:<minute-bucket>`.
-15. Apply idempotency lookup with `X-Submission-Id` via `idem:<submission-id>`.
-16. Build normalized message.
-17. Call `mailService.enqueue(message)`.
-18. Cache successful idempotent response for 24h when a submission ID is present.
+9. If the allowed-origins setting is empty, do **not** learn or persist origins from anonymous submit traffic.
+10. If the request origin is not in the configured allowed list, return `403` with `status: "origin_not_allowed"`.
+11. Apply honeypot check.
+12. Apply Turnstile verification if enabled.
+13. Apply per-IP rate limit in KV using `ratelimit:<ip>:<minute-bucket>`.
+14. Apply idempotency lookup with `X-Submission-Id` via `idem:<submission-id>`.
+15. Build normalized message.
+16. Call `mailService.enqueue(message)`.
+17. Cache successful idempotent response for 24h when a submission ID is present.
+18. Cache only the response status payload needed for replay, not echoed submission field values.
 19. Return stable JSON with a `status` field and user-facing message.
 
 ### Settings persistence
@@ -263,13 +270,14 @@ Planned KV keys:
 - `settings:honeypotEnabled`
 - `settings:strictMode`
 - `state:lastRuntimeError`
+- `state:lastRuntimeErrorExpiresAt`
 
 Defaults seeded during install:
 
 - provider: `cloudflare`
 - subject template: `[{site}] {formName}`
 - success message: concise success copy
-- allowed origins: `null` initially, then auto-populated from the first valid request origin when possible
+- allowed origins: empty by default; admin settings page can prefill a suggested current-site origin based on the authenticated admin request origin
 - honeypot field name: `website`
 - rate limit: `10`
 - turnstile enabled: `false`
@@ -325,13 +333,17 @@ Single admin page at `/settings`, served through the plugin `admin` route using 
 6. `context`
    - Token help for `{site}` and `{formName}`
    - Origin help text: "Leave empty to auto-detect this site's origin. Add additional origins for headless deployments where your frontend is on a different domain than your EmDash admin."
-7. `code`
+7. Reusable author footer / help section from `src/admin/author-credit.ts`
+   - author credit
+   - "Get help" section
+8. `code`
    - Minimal API snippet or header example for `X-Submission-Id`
 
 ### `form_submit` behavior
 
 - Validate settings server-side.
 - Persist only valid settings.
+- On page load, compute a suggested origin from the authenticated admin request origin when `allowedOrigins` is empty, but do not silently persist it.
 - Return refreshed blocks plus:
   - success `toast` on save
   - error `banner` when validation fails
@@ -345,6 +357,7 @@ Validation rules:
 - rate limit must be an integer >= 1
 - Turnstile fields required only when Turnstile is enabled
 - ZeptoMail-specific secret required only when provider is `zeptomail`
+- secret fields are one-way write only and never rendered back to the admin
 
 ## Queue-readiness decision
 
@@ -360,6 +373,7 @@ Planned structure:
 - `mailService.enqueue(message)` exists now
 - v1 implementation: `enqueue()` immediately calls `deliver()`
 - this keeps the transport boundary ready for a future queue-backed implementation
+- configuration-health checks will explicitly include the "Cloudflare binding missing" path
 
 ## Test plan
 
@@ -381,6 +395,7 @@ Coverage targets:
 - honeypot silent rejection
 - 11th request in a minute returns `429`
 - idempotency cache hit does not resend
+- "Cloudflare binding missing" configuration-health path
 - HTML escaping of `<script>` and quotes
 - configuration-time Cloudflare error state when email send path is unavailable
 
@@ -427,8 +442,7 @@ If we later decide to parallelize after the contracts are stable, the cleanest s
    - Plan update:
      - persist `settings:allowedOrigins` as an array of origin strings
      - expose it in admin as a textarea with one origin per line
-     - if empty, auto-detect the current site's origin on the first submit when possible
-     - if still empty, fall back gracefully to same-origin-only behavior until an origin is learned or saved
+     - if empty, suggest the authenticated admin request origin on settings page load, without persisting it automatically
      - reject requests with missing `Origin`, or with a non-matching origin, using `403` and `status: "origin_not_allowed"`
    - No further decision needed here unless you want different missing-`Origin` behavior.
 
@@ -443,4 +457,9 @@ If we later decide to parallelize after the contracts are stable, the cleanest s
    - Proposed resolution: before implementation, we should either:
      - accept a riskier standard-plugin public-route build based on the skill docs, or
      - change architecture toward a trusted/native plugin if marketplace publishability is less important than matching known-working first-party route behavior.
-   - I recommend pausing for your decision here rather than pretending the docs are settled.
+   - Decision received: proceed as a Standard-format plugin with `public: true` submit route and handle any marketplace validation feedback later.
+
+6. **Admin runtime-health and display safety**
+   - `state:lastRuntimeError` will carry a 7-day TTL.
+   - Any stored runtime error text rendered in the admin will be sanitized/escaped before display.
+   - Idempotency replay records will store only stable response status payloads, never echoed submission field values.
