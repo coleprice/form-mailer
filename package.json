@@ -8,7 +8,7 @@
   "homepage": "https://coleprice.com/plugins/form-mailer",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coleprice/emdash-plugin-form-mailer.git"
+    "url": "git+https://github.com/coleprice/form-mailer.git"
   },
   "files": [
     "dist",
@@ -45,4 +45,3 @@
     "wrangler": "^4.83.0"
   }
 }
-
