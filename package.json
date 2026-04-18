@@ -1,6 +1,6 @@
 {
   "name": "@coleprice/emdash-plugin-form-mailer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Opinionated EmDash plugin for reliable form submission handling and email notifications.",
   "type": "module",
   "license": "MIT",

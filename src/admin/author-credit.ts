@@ -5,11 +5,11 @@ export function buildAuthorCreditBlocks(): Array<Record<string, unknown>> {
     },
     {
       type: "context",
-      text: "Built by Cole Price • https://coleprice.com/plugins/form-mailer"
+      text: "Built by Cole Price"
     },
     {
       type: "section",
-      text: "Get help: Documentation and setup guidance live in the README. Repository: https://github.com/coleprice/emdash-plugin-form-mailer"
+      text: "Get help: setup guidance lives in the README. The repository link is on this plugin's marketplace page."
     }
   ];
 }
