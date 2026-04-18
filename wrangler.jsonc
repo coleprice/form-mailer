@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "emdash-plugin-form-mailer-local",
+  "name": "form-mailer-local",
   "main": "./test/wrangler-smoke-worker.ts",
   "compatibility_date": "2026-04-17",
   "send_email": [
@@ -9,4 +9,3 @@
     }
   ]
 }
-

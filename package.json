@@ -1,5 +1,5 @@
 {
-  "name": "@coleprice/emdash-plugin-form-mailer",
+  "name": "form-mailer",
   "version": "0.1.1",
   "description": "Opinionated EmDash plugin for reliable form submission handling and email notifications.",
   "type": "module",

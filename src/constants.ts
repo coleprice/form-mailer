@@ -1,6 +1,6 @@
-export const PLUGIN_ID = "@coleprice/emdash-plugin-form-mailer";
-export const PLUGIN_VERSION = "0.1.0";
-export const SANDBOX_ENTRYPOINT = "@coleprice/emdash-plugin-form-mailer/sandbox";
+export const PLUGIN_ID = "form-mailer";
+export const PLUGIN_VERSION = "0.1.1";
+export const SANDBOX_ENTRYPOINT = "form-mailer/sandbox";
 
 export const TURNSTILE_VERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -62,4 +62,3 @@ export const TOP_LEVEL_SUBMISSION_KEYS = new Set([
   "turnstileToken",
   "honeypot"
 ]);
-

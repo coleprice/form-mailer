@@ -41,8 +41,8 @@ export function createMockContext(options: MockContextOptions = {}) {
 
   const ctx: PluginContextLike = {
     plugin: {
-      id: "@coleprice/emdash-plugin-form-mailer",
-      version: "0.1.0"
+      id: "form-mailer",
+      version: "0.1.1"
     },
     kv,
     log: {

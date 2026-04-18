@@ -1,6 +1,8 @@
-# @coleprice/emdash-plugin-form-mailer
+# Form Mailer
 
-`@coleprice/emdash-plugin-form-mailer` is a small, opinionated EmDash plugin for reliable contact and lead-form delivery. It keeps scope intentionally narrow: accept a validated public form submission, apply anti-spam controls, and send notification email through either Cloudflare Email Service or ZeptoMail.
+`Form Mailer` is a small, opinionated EmDash plugin for reliable contact and lead-form delivery. It keeps scope intentionally narrow: accept a validated public form submission, apply anti-spam controls, and send notification email through either Cloudflare Email Service or ZeptoMail.
+
+Plugin/package ID: `form-mailer`
 
 It is built as a Standard-format EmDash plugin with a public `submit` route, Block Kit admin settings, structured logging, and a queue-ready delivery boundary that stays synchronous in v0.1.
 
@@ -20,7 +22,7 @@ Allowed hosts are intentionally narrow:
 
 ### Marketplace install
 
-1. Install `@coleprice/emdash-plugin-form-mailer` from the EmDash marketplace.
+1. Install `Form Mailer` from the EmDash marketplace.
 2. Enable the plugin in your EmDash site.
 3. Open the plugin settings page at `Form Mailer`.
 4. Save your sender, recipients, allowed origins, and provider configuration.
@@ -32,7 +34,7 @@ Allowed hosts are intentionally narrow:
 
 ```ts
 import { defineConfig } from "emdash";
-import { formMailerPlugin } from "@coleprice/emdash-plugin-form-mailer";
+import { formMailerPlugin } from "form-mailer";
 
 export default defineConfig({
   plugins: [formMailerPlugin()]
@@ -135,7 +137,7 @@ Minimal fetch example:
 ```ts
 const submissionId = crypto.randomUUID();
 
-await fetch("/_emdash/api/plugins/@coleprice/emdash-plugin-form-mailer/submit", {
+await fetch("/_emdash/api/plugins/form-mailer/submit", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -161,7 +163,7 @@ This is the semver-committed public API for theme and frontend integrations.
 
 ### Endpoint
 
-`POST /_emdash/api/plugins/@coleprice/emdash-plugin-form-mailer/submit`
+`POST /_emdash/api/plugins/form-mailer/submit`
 
 ### Required headers
 
@@ -294,4 +296,3 @@ The sender domain usually needs to be verified in Cloudflare Email Service befor
 ### Local dev confusion around `wrangler.jsonc`
 
 The `wrangler.jsonc` in this repo is only scaffolding for local plugin development and worker-based tests. Production binding configuration lives in the host EmDash site’s Wrangler config.
-

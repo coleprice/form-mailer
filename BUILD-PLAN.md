@@ -2,7 +2,7 @@
 
 ## Scope
 
-Build `@coleprice/emdash-plugin-form-mailer` as a **Standard-format EmDash plugin** with:
+Build `form-mailer` as a **Standard-format EmDash plugin** with:
 
 - a public POST submission route
 - Block Kit admin settings UI
@@ -145,10 +145,10 @@ Planned descriptor shape:
 
 ```ts
 {
-  id: "@coleprice/emdash-plugin-form-mailer",
-  version: "0.1.0",
+  id: "form-mailer",
+  version: "0.1.1",
   format: "standard",
-  entrypoint: "@coleprice/emdash-plugin-form-mailer/sandbox",
+  entrypoint: "form-mailer/sandbox",
   capabilities: ["email:send", "network:fetch"],
   allowedHosts: ["challenges.cloudflare.com", "api.zeptomail.com"],
   adminPages: [
