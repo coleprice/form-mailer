@@ -3,6 +3,8 @@
 .env
 .env.*
 !.env.example
+BUILD-PLAN.md
+TODO-v2.md
 node_modules
 dist
 .wrangler

@@ -145,10 +145,10 @@ await fetch("/_emdash/api/plugins/form-mailer/submit", {
   },
   body: JSON.stringify({
     formName: "Contact",
-    site: "coleprice.com",
+    site: "My Site",
     fields: {
       name: "Ada Lovelace",
-      email: "ada@example.com",
+      email: "ada@local.test",
       message: "Hello from the site."
     },
     turnstileToken: "token-from-widget",
@@ -168,7 +168,7 @@ This is the semver-committed public API for theme and frontend integrations.
 ### Required headers
 
 - `Content-Type: application/json`
-- `Origin: https://your-frontend.example`
+- `Origin: <your-site-origin>`
 
 Optional header:
 
@@ -180,10 +180,10 @@ Optional header:
 ```json
 {
   "formName": "Contact",
-  "site": "coleprice.com",
+  "site": "My Site",
   "fields": {
     "name": "Ada Lovelace",
-    "email": "ada@example.com",
+    "email": "ada@local.test",
     "message": "Hello from the site."
   },
   "turnstileToken": "token-from-widget",

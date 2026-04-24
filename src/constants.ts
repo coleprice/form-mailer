@@ -1,5 +1,5 @@
 export const PLUGIN_ID = "form-mailer";
-export const PLUGIN_VERSION = "0.1.1";
+export const PLUGIN_VERSION = "0.1.2";
 export const SANDBOX_ENTRYPOINT = "form-mailer/sandbox";
 
 export const TURNSTILE_VERIFY_URL =

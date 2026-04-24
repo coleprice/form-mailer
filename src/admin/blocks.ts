@@ -155,10 +155,10 @@ export function buildSettingsBlocks(input: {
       type: "code",
       language: "bash",
       code:
-        `curl -X POST https://your-site.example/_emdash/api/plugins/.../submit \\\n` +
+        `curl -X POST /_emdash/api/plugins/form-mailer/submit \\\n` +
         `  -H "Content-Type: application/json" \\\n` +
         `  -H "${SUBMISSION_ID_HEADER}: $(uuidgen)" \\\n` +
-        "  -d '{\"formName\":\"Contact\",\"fields\":{\"name\":\"Ada\",\"email\":\"ada@example.com\"}}'"
+        "  -d '{\"formName\":\"Contact\",\"fields\":{\"name\":\"Ada\",\"email\":\"ada@local.test\"}}'"
     },
     ...buildAuthorCreditBlocks()
   ];
